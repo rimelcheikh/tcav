@@ -1,19 +1,3 @@
-"""
-Copyright 2018 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -34,6 +18,21 @@ class CAV(object):
   CAV represents semenatically meaningful vector directions in
   network's embeddings (bottlenecks).
   """
+  
+  
+  def __init__(self, concepts, bottleneck, hparams, save_path=None):
+    """Initialize CAV class.
+
+    Args:
+      concepts: set of concepts used for CAV
+      bottleneck: the bottleneck used for CAV
+      hparams: a parameter used to learn CAV
+      save_path: where to save this CAV
+    """
+    self.concepts = concepts
+    self.bottleneck = bottleneck
+    self.hparams = hparams
+    self.save_path = save_path
 
   @staticmethod
   def default_hparams():
@@ -135,19 +134,6 @@ class CAV(object):
 
     return x, labels, labels2text
 
-  def __init__(self, concepts, bottleneck, hparams, save_path=None):
-    """Initialize CAV class.
-
-    Args:
-      concepts: set of concepts used for CAV
-      bottleneck: the bottleneck used for CAV
-      hparams: a parameter used to learn CAV
-      save_path: where to save this CAV
-    """
-    self.concepts = concepts
-    self.bottleneck = bottleneck
-    self.hparams = hparams
-    self.save_path = save_path
 
   def train(self, acts):
     """Train the CAVs from the activations.
@@ -166,17 +152,19 @@ class CAV(object):
         self.concepts, self.bottleneck, acts)
 
     if self.hparams['model_type'] == 'linear':
-      lm = linear_model.SGDClassifier(alpha=self.hparams['alpha'], max_iter=self.hparams['max_iter'], tol=self.hparams['tol'])
+      lm = linear_model.SGDClassifier(random_state=2, alpha=self.hparams['alpha'], max_iter=self.hparams['max_iter'], tol=self.hparams['tol'])
     elif self.hparams['model_type'] == 'logistic':
-      lm = linear_model.LogisticRegression()
+      lm = linear_model.LogisticRegression(random_state=2)
     else:
       raise ValueError('Invalid hparams.model_type: {}'.format(
           self.hparams['model_type']))
 
     self.accuracies = self._train_lm(lm, x, labels, labels2text)
     if len(lm.coef_) == 1:
-      # if there were only two labels, the concept is assigned to label 0 by
-      # default. So we flip the coef_ to reflect this.
+      # if there were only two labels, and coef_.shape = (1, n_features) 
+      # the concept is assigned to label 0 by default
+      # and coeff in coef_ are the ones for label 1
+      # So we flip the coef_ to reflect this.
       self.cavs = [-1 * lm.coef_[0], lm.coef_[0]]
     else:
       self.cavs = [c for c in lm.coef_]
@@ -208,7 +196,7 @@ class CAV(object):
     """Get CAV direction.
 
     Args:
-      concept: the conept of interest
+      concept: the concept of interest
 
     Returns:
       CAV vector.
@@ -249,7 +237,7 @@ class CAV(object):
 
     """
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.33, stratify=y)
+        x, y, test_size=0.33, stratify=y, random_state=2)
     # if you get setting an array element with a sequence, chances are that your
     # each of your activation had different shape - make sure they are all from
     # the same layer, and input image size was the same

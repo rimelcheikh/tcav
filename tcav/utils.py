@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind, rankdata
 import numpy as np
 import tensorflow as tf
 from tcav.tcav_results.results_pb2 import Result, Results
@@ -82,13 +82,15 @@ def process_what_to_run_expand(pairs_to_test,
             else 'random500_{}'.format(i))
 
   new_pairs_to_test = []
+  tf.compat.v1.logging.info('èè',pairs_to_test,'èèè')
   for (target, concept_set) in pairs_to_test:
+    
     new_pairs_to_test_t = []
     # if only one element was given, this is to test with random.
     if len(concept_set) == 1:
       i = 0
       while len(new_pairs_to_test_t) < min(100, num_random_exp):
-        # make sure that we are not comparing the same thing to each other.
+        # make sure that we are not comparing the same things to each other.
         if concept_set[0] != get_random_concept(
             i) and random_counterpart != get_random_concept(i):
           new_pairs_to_test_t.append(
@@ -101,7 +103,7 @@ def process_what_to_run_expand(pairs_to_test,
     new_pairs_to_test.extend(new_pairs_to_test_t)
 
   all_concepts = list(set(flatten([cs + [tc] for tc, cs in new_pairs_to_test])))
-
+  tf.compat.v1.logging.info('_____',new_pairs_to_test_t,'___________')
   return all_concepts, new_pairs_to_test
 
 
@@ -188,7 +190,7 @@ def print_results(results, random_counterpart=None, random_concepts=None, num_ra
 
   # random
   random_i_ups = {}
-
+  print("!!!!!!!!",results)
   for result in results:
     if result['cav_concept'] not in result_summary:
       result_summary[result['cav_concept']] = {}
@@ -269,3 +271,27 @@ def results_to_proto(results):
   for result in results:
     results_proto.results.append(result_to_proto(result))
   return results_proto
+
+
+def get_exp_and_pred_scores(results, target, concept, bn, neg_concept = 'random500_0'):
+    
+    for i in range(len(results)):
+        if (results[i]['cav_concept'] == concept) and (results[i]['target_class'] == target) and (results[i]['negative_concept'] == neg_concept and results[i]['bottleneck'] == bn):
+            res = results[i]
+    
+            exp_scores = res['val_directional_dirs']
+            pred_scores = np.squeeze(res['logits'])[:,80]
+
+    return exp_scores, pred_scores
+    
+
+# Computing Spearman's rank correlation coefficient between the sensitivity and the predictio scores
+def spearmans_rank(exp, pred):
+    R_exp = rankdata(exp)
+    R_pred = rankdata(pred)
+    
+    return np.corrcoef(R_exp, R_pred)
+
+
+
+

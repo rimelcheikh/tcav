@@ -20,10 +20,11 @@ from __future__ import print_function
 from scipy.stats import ttest_ind
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 # helper function to output plot and write summary data
-def plot_results(results, random_counterpart=None, random_concepts=None, num_random_exp=100,
+def plot_results(results, sp_coeff, working_dir, random_counterpart=None, random_concepts=None, num_random_exp=100,
     min_p_val=0.05):
   """Helper function to organize results.
   When run in a notebook, outputs a matplotlib bar plot of the
@@ -51,9 +52,14 @@ def plot_results(results, random_counterpart=None, random_concepts=None, num_ran
     else:
       return 'random500_' in concept
 
+  
+  if not os.path.exists(working_dir+"/results/"):
+      os. makedirs(working_dir+"/results/")
+  res_file = open(working_dir+"/results/"+results[0]['target_class']+".txt","w")
+
   # print class, it will be the same for all
   print("Class =", results[0]['target_class'])
-
+  res_file.write("Class = "+results[0]['target_class'])
   # prepare data
   # dict with keys of concepts containing dict with bottlenecks
   result_summary = {}
@@ -69,14 +75,14 @@ def plot_results(results, random_counterpart=None, random_concepts=None, num_ran
       result_summary[result['cav_concept']][result['bottleneck']] = []
     
     result_summary[result['cav_concept']][result['bottleneck']].append(result)
-
+    
     # store random
     if is_random_concept(result['cav_concept']):
       if result['bottleneck'] not in random_i_ups:
         random_i_ups[result['bottleneck']] = []
         
       random_i_ups[result['bottleneck']].append(result['i_up'])
-    
+
   # to plot, must massage data again 
   plot_data = {}
   plot_concepts = []
@@ -90,7 +96,13 @@ def plot_results(results, random_counterpart=None, random_concepts=None, num_ran
       plot_concepts.append(concept)
 
       for bottleneck in result_summary[concept]:
+        #tcav scores using CAVs for concept with each of the random sets as negative concepts
         i_ups = [item['i_up'] for item in result_summary[concept][bottleneck]]
+        """print("----------------------")
+        for item in result_summary[concept][bottleneck]:
+            print(item)
+        print(i_ups)
+        print("----------------------")"""
         
         # Calculate statistical significance
         _, p_val = ttest_ind(random_i_ups[bottleneck], i_ups)
@@ -115,6 +127,15 @@ def plot_results(results, random_counterpart=None, random_concepts=None, num_ran
             np.mean(random_i_ups[bottleneck]),
             np.std(random_i_ups[bottleneck]), p_val,
             "not significant" if p_val > min_p_val else "significant"))
+                
+        is_significant = "not significant" if p_val > min_p_val else "significant"
+        res_file.write("\n   Concept = "+concept
+                       +"\n     Bottleneck = "+bottleneck
+                       +"\n       TCAV Score = "+str(np.mean(i_ups))[0:5]+" (+- "+str(np.std(i_ups))[0:5]+")"
+                       +"\n         random was "+str(np.mean(random_i_ups[bottleneck]))[0:5]+" (+- "+str(np.std(random_i_ups[bottleneck]))[0:5]+")"
+                       +"\n         p-val = "+ str(p_val)[0:5]                                                                                                                   
+                       +"\n         "+is_significant)
+                       ##+"\n       Spearman's coefficient = "+ str(sp_coeff[concept][bottleneck]))
         
   # subtract number of random experiments
   if random_counterpart:

@@ -43,7 +43,7 @@ class CavTest(googletest.TestCase):
     self.accuracies = {'concept1': 0.8, 'concept2': 0.5, 'overall': 0.65}
     self.cav_vecs = [[1, 2, 3], [4, 5, 6]]
 
-    self.test_subdirectory = os.path.join(FLAGS.tcav_test_tmpdir, 'test')
+    self.test_subdirectory = 'tmp/test'#os.path.join(FLAGS.tcav_test_tmpdir, 'test')
     self.cav_dir = self.test_subdirectory
     self.cav_file_name = CAV.cav_key(self.concepts, self.bottleneck,
                                          self.hparams['model_type'],
@@ -61,6 +61,7 @@ class CavTest(googletest.TestCase):
 
     if os.path.exists(self.cav_dir):
       shutil.rmtree(self.cav_dir)
+      
     os.mkdir(self.cav_dir)
     with tf.io.gfile.GFile(self.save_path, 'w') as pkl_file:
       pickle.dump({

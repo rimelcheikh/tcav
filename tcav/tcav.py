@@ -28,6 +28,7 @@ import time
 import tensorflow as tf
 
 
+
 class TCAV(object):
   """TCAV object: runs TCAV for one target and a set of concepts.
   The static methods (get_direction_dir_sign, compute_tcav_score,
@@ -54,8 +55,9 @@ class TCAV(object):
         sign of the directional derivative
     """
     # Grad points in the direction which DECREASES probability of class
-    grad = np.reshape(mymodel.get_gradient(
-        act, [class_id], cav.bottleneck, example), -1)
+    grad, _ = mymodel.get_gradient(
+        act, [class_id], cav.bottleneck, example)
+    grad= np.reshape(grad, -1)
     dot_prod = np.dot(grad, cav.get_direction(concept))
     return dot_prod < 0
 
@@ -128,13 +130,15 @@ class TCAV(object):
     """
     class_id = mymodel.label_to_id(target_class)
     directional_dir_vals = []
+    logits = []
     for i in range(len(class_acts)):
       act = np.expand_dims(class_acts[i], 0)
       example = examples[i]
-      grad = np.reshape(
-          mymodel.get_gradient(act, [class_id], cav.bottleneck, example), -1)
+      grad, logit = mymodel.get_gradient(act, [class_id], cav.bottleneck, example)
+      grad = np.reshape(grad, -1)
       directional_dir_vals.append(np.dot(grad, cav.get_direction(concept)))
-    return directional_dir_vals
+      logits.append(logit)
+    return directional_dir_vals, logits
 
   def __init__(self,
                sess,
@@ -191,7 +195,7 @@ class TCAV(object):
     # parameters
     self.params = self.get_params()
     tf.compat.v1.logging.info('TCAV will %s params' % len(self.params))
-
+                                       
   def run(self, num_workers=10, run_parallel=False, overwrite=False, return_proto=False):
     """Run TCAV for all parameters (concept and random), write results to html.
 
@@ -220,6 +224,7 @@ class TCAV(object):
         tf.compat.v1.logging.info('Finished running param %s of %s' % (i, len(self.params)))
         results.append(res)
       pool.close()
+    
     else:
       for i, param in enumerate(self.params):
         tf.compat.v1.logging.info('Running param %s of %s' % (i, len(self.params)))
@@ -256,6 +261,7 @@ class TCAV(object):
     # Get acts
     acts = activation_generator.process_and_load_activations(
         [bottleneck], concepts + [target_class])
+
     # Get CAVs
     cav_hparams = CAV.default_hparams()
     cav_hparams['alpha'] = alpha
@@ -283,7 +289,7 @@ class TCAV(object):
         cav_instance, acts[target_class][cav_instance.bottleneck],
         activation_generator.get_examples_for_concept(target_class),
         run_parallel=run_parallel)
-    val_directional_dirs = self.get_directional_dir(
+    val_directional_dirs, logits = self.get_directional_dir(
         mymodel, target_class_for_compute_tcav_score, cav_concept,
         cav_instance, acts[target_class][cav_instance.bottleneck],
         activation_generator.get_examples_for_concept(target_class))
@@ -313,7 +319,9 @@ class TCAV(object):
         'alpha':
             alpha,
         'bottleneck':
-            bottleneck
+            bottleneck,
+        'logits':
+            logits
     }
     del acts
     return result
@@ -393,7 +401,7 @@ class TCAV(object):
     for bottleneck in self.bottlenecks:
       for target_in_test, concepts_in_test in self.pairs_to_test:
         for alpha in self.alphas:
-          tf.compat.v1.logging.info('%s %s %s %s', bottleneck, concepts_in_test,
+          tf.compat.v1.logging.info('Params: : %s %s %s %s', bottleneck, concepts_in_test,
                           target_in_test, alpha)
           params.append(
               run_params.RunParams(bottleneck, concepts_in_test, target_in_test,

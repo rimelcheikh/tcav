@@ -24,6 +24,8 @@ import six
 import tensorflow as tf
 from google.protobuf import text_format
 
+
+
 class ModelWrapper(six.with_metaclass(ABCMeta, object)):
   """Simple wrapper of the for models with session object for TCAV.
 
@@ -63,7 +65,6 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
     self.loss = None
     # If tensors in the loaded graph are prefixed with 'import/'
     self.import_prefix = False
-
     if model_path:
       self._try_loading_model(model_path)
     if node_dict:
@@ -136,8 +137,10 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
 
     self.bottlenecks_gradients = {}
     for bn in self.bottlenecks_tensors:
+      #Constructs symbolic derivatives of sum of ys w.r.t. x in xs.
       self.bottlenecks_gradients[bn] = tf.gradients(
           ys=self.loss, xs=self.bottlenecks_tensors[bn])[0]
+      
 
   def get_gradient(self, acts, y, bottleneck_name, example):
     """Return the gradient of the loss with respect to the bottleneck_name.
@@ -155,7 +158,7 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
     return self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y
-    })
+    }), self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)})
 
   def get_predictions(self, examples):
     """Get prediction of the examples.
@@ -246,6 +249,8 @@ class PublicImageModelWrapper(ImageModelWrapper):
     self.labels = tf.io.gfile.GFile(labels_path).read().splitlines()
     self.ends = PublicImageModelWrapper.import_graph(
         model_fn_path, endpoints_dict, self.image_value_range, scope=scope)
+    self.logits = PublicImageModelWrapper.import_graph(
+        model_fn_path, endpoints_dict, self.image_value_range, scope=scope)['prediction']
     self.bottlenecks_tensors = PublicImageModelWrapper.get_bottleneck_tensors(
         scope)
     graph = tf.compat.v1.get_default_graph()
@@ -260,8 +265,9 @@ class PublicImageModelWrapper(ImageModelWrapper):
               labels=tf.one_hot(
                   self.y_input,
                   self.ends['prediction'].get_shape().as_list()[1]),
-              logits=self.pred))
+              logits=self.pred))   ##logits = Unscaled log probabilities. 
     self._make_gradient_tensors()
+    #self._make_logits_tensor()
 
   def id_to_label(self, idx):
     return self.labels[idx]

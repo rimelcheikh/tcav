@@ -67,6 +67,7 @@ class ActivationGeneratorBase(ActivationGeneratorInterface):
       tf.io.gfile.makedirs(self.acts_dir)
 
     for concept in concepts:
+        
       if concept not in acts:
         acts[concept] = {}
       for bottleneck_name in bottleneck_names:
@@ -161,7 +162,7 @@ class ImageActivationGenerator(ActivationGeneratorBase):
                              filenames,
                              max_imgs=500,
                              do_shuffle=True,
-                             run_parallel=True,
+                             run_parallel=False,
                              shape=(299, 299),
                              num_workers=50):
     """Return image arrays from filenames.
@@ -182,6 +183,7 @@ class ImageActivationGenerator(ActivationGeneratorBase):
     # First shuffle a copy of the filenames.
     filenames = filenames[:]
     if do_shuffle:
+      np.random.seed(0)
       np.random.shuffle(filenames)
 
     if run_parallel:
@@ -204,7 +206,6 @@ class ImageActivationGenerator(ActivationGeneratorBase):
       if len(imgs) <= 1:
         raise ValueError(
             'You must have more than 1 image in each class to run TCAV.')
-
     return np.array(imgs)
 
 
