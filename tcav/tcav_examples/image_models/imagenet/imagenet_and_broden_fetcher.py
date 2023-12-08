@@ -25,7 +25,7 @@ Usage for Imagenet
                     
 Usage for broden:
 First, make sure you downloaded and unzipped the broden_224 dataset to a location of your interest. Then, run:
-  download_texture_to_working_folder(broden_path="path_were_you_saved_broden", 
+  download_²_to_working_folder(broden_path="path_were_you_saved_broden", 
                                       saving_path="your_path",
                                       texture_name="striped",
                                        number_of_images=100)
@@ -48,9 +48,13 @@ from PIL import Image
 import tensorflow as tf
 import socket
 import random
+import csv 
+
+
+
 
 kImagenetBaseUrl = "http://imagenet.stanford.edu/api/imagenet.synset.geturls?wnid="
-kBrodenTexturesPath = "broden1_224/images/dtd/"
+kBrodenTexturesPath = "\images\dtd"
 kMinFileSize = 10000
 
 ####### Helper functions
@@ -211,7 +215,8 @@ def download_texture_to_working_folder(broden_path, saving_path, texture_name,
   tf.io.gfile.makedirs(texture_saving_path)
 
   # Get images from broden
-  broden_textures_path = os.path.join(broden_path, kBrodenTexturesPath)
+  broden_textures_path = "downloaded_data/broden1_224\images\dtd/" #↓os.path.join(broden_path, kBrodenTexturesPath)#"downloaded_data/broden1_224\images\dtd/"#
+
   tf.compat.v1.logging.info("Using path " + str(broden_textures_path) + " for texture: " +
                   str(texture_name))
   for root, dirs, files in os.walk(broden_textures_path):
@@ -242,6 +247,172 @@ def download_texture_to_working_folder(broden_path, saving_path, texture_name,
         # Break if we saved all images
         if save_number <= 0:
           break
+      
+        
+     
+"""Moves all scenes in a downloaded Broden to our working folder.
+
+Assumes that you manually downloaded the broden dataset to broden_path.
+
+
+  Args:
+  broden_path: String.Path where you donwloaded broden.
+  saving_path: String.Where we'll save the images. Saves under
+    path/scene_name.
+  scene_name: String representing DTD scene name i.e striped
+  number_of_images: Integer.Number of images to move
+"""
+def download_scene_to_working_folder(broden_path, saving_path, scene_name,
+                                       number_of_images):
+  # Create new experiment folder where we're moving the data to
+  scene_saving_path = os.path.join(saving_path, scene_name)
+  tf.io.gfile.makedirs(scene_saving_path)
+  
+
+  with open(broden_path+'/c_scene.csv') as file_obj: 
+    reader_obj = csv.reader(file_obj) 
+    for row in reader_obj: 
+        if row[2] == scene_name:
+            scene_number = row[1]
+       
+  scene_files_paths = []          
+  with open(broden_path+'/index.csv') as file_obj: 
+    reader_obj = csv.reader(file_obj) 
+    for row in reader_obj: 
+        if row[10] == scene_number:
+            scene_files_paths.append(row[0].split('ade20k/')[1])
+                       
+
+
+  # Get images from broden
+  broden_scenes_path = broden_path+"/images/ade20k/" #↓os.path.join(broden_path, kBrodenscenesPath)#"downloaded_data/broden1_224\images\dtd/"#
+
+  tf.compat.v1.logging.info("Using path " + str(broden_scenes_path) + " for scene: " + str(scene_name))
+  
+  tf.compat.v1.logging.info("We have " + str(len(scene_files_paths)) +
+                    " images for the concept " + scene_name)
+  
+  # Make sure we can fetch as many as the user requested.
+  if number_of_images > len(scene_files_paths):
+       tf.compat.v1.logging.info("Concept " + scene_name + " only contains " +
+                      str(len(scene_files_paths)) +
+                      " images. You requested " + str(number_of_images))
+  
+#○  for file_name in scene_files_paths : 
+      # We are only moving data we are guaranteed to have, so no risk for infinite loop here.
+  save_number = number_of_images
+  while save_number > 0:
+    for file in scene_files_paths:
+      path_file = os.path.join(broden_scenes_path, file)
+      scene_saving_path_file = os.path.join(scene_saving_path, file)
+      tf.io.gfile.copy(
+          path_file, scene_saving_path_file,
+          overwrite=True)  # change you destination dir
+      save_number -= 1
+      # Break if we saved all images
+      if save_number <= 0:
+        break
+
+  print("___________________________________")
+      
+      
+
+
+def download_color_to_working_folder(broden_path, saving_path, color_name,
+                                       number_of_images):
+  # Create new experiment folder where we're moving the data to
+  color_saving_path = os.path.join(saving_path, color_name)
+  tf.io.gfile.makedirs(color_saving_path)
+
+  # Get images from broden
+  broden_colors_path = "downloaded_data/broden1_224\images/ade20k/" #↓os.path.join(broden_path, kBrodencolorsPath)#"downloaded_data/broden1_224\images\dtd/"#
+
+  tf.compat.v1.logging.info("Using path " + str(broden_colors_path) + " for color: " +
+                  str(color_name))
+
+  for root, dirs, files in os.walk(broden_colors_path):
+    # Broden contains _color suffixed images. Those shouldn't be used by tcav.
+    color_files = [
+        a for a in files if (a.startswith(color_name) and "color" in a)
+    ]
+    print(color_files)
+    number_of_files_for_concept = len(color_files)
+    tf.compat.v1.logging.info("We have " + str(len(color_files)) +
+                    " images for the concept " + color_name)
+
+    # Make sure we can fetch as many as the user requested.
+    if number_of_images > number_of_files_for_concept:
+      raise Exception("Concept " + color_name + " only contains " +
+                      str(number_of_files_for_concept) +
+                      " images. You requested " + str(number_of_images))
+
+    # We are only moving data we are guaranteed to have, so no risk for infinite loop here.
+    save_number = number_of_images
+    while save_number > 0:
+      for file in color_files:
+        path_file = os.path.join(root, file)
+        color_saving_path_file = os.path.join(color_saving_path, file)
+        tf.io.gfile.copy(
+            path_file, color_saving_path_file,
+            overwrite=True)  # change you destination dir
+        save_number -= 1
+        # Break if we saved all images
+        if save_number <= 0:
+          break
+      
+        
+
+def download_object_to_working_folder(broden_path, saving_path, object_name,
+                                       number_of_images):
+  # Create new experiment folder where we're moving the data to
+  object_saving_path = os.path.join(saving_path, object_name)
+  tf.io.gfile.makedirs(object_saving_path)
+
+  # Get images from broden
+  broden_objects_path = "downloaded_data/broden1_224\images/ade20k/" #↓os.path.join(broden_path, kBrodenobjectsPath)#"downloaded_data/broden1_224\images\dtd/"#
+
+  tf.compat.v1.logging.info("Using path " + str(broden_objects_path) + " for object: " +
+                  str(object_name))
+
+  for root, dirs, files in os.walk(broden_objects_path):
+    # Broden contains _object suffixed images. Those shouldn't be used by tcav.
+    object_files = [
+        a for a in files if (a.startswith(object_name) and "object" in a)
+    ]
+    print(object_files)
+    number_of_files_for_concept = len(object_files)
+    tf.compat.v1.logging.info("We have " + str(len(object_files)) +
+                    " images for the concept " + object_name)
+
+    # Make sure we can fetch as many as the user requested.
+    if number_of_images > number_of_files_for_concept:
+      raise Exception("Concept " + object_name + " only contains " +
+                      str(number_of_files_for_concept) +
+                      " images. You requested " + str(number_of_images))
+
+    # We are only moving data we are guaranteed to have, so no risk for infinite loop here.
+    save_number = number_of_images
+    while save_number > 0:
+      for file in object_files:
+        path_file = os.path.join(root, file)
+        object_saving_path_file = os.path.join(object_saving_path, file)
+        tf.io.gfile.copy(
+            path_file, object_saving_path_file,
+            overwrite=True)  # change you destination dir
+        save_number -= 1
+        # Break if we saved all images
+        if save_number <= 0:
+          break
+
+
+
+
+
+
+
+
+
+
 
 
 """ Creates folders with random examples under working directory.
@@ -272,7 +443,7 @@ def generate_random_folders(working_directory, random_folder_prefix,
                             number_of_random_folders,
                             number_of_examples_per_folder, imagenet_dataframe):
   imagenet_concepts = imagenet_dataframe["class_name"].values.tolist()
-  for partition_number in range(number_of_random_folders):
+  for partition_number in range(24,number_of_random_folders):
     partition_name = random_folder_prefix + "_" + str(partition_number)
     partition_folder_path = os.path.join(working_directory, partition_name)
     tf.io.gfile.makedirs(partition_folder_path)

@@ -30,28 +30,46 @@ cd "$1" # First argument contains the path
 echo "starting download"
 
 
+
+# Download mobilenet
+mkdir -p mobilenet
+pushd mobilenet
+wget --progress=bar \
+   https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz \
+   -O mobilenet.zip
+#curl -O https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz
+#mkdir "mobilenet_v2_1.0_224"
+#tar -xzvf mobilenet_v2_1.0_224.tgz -C "mobilenet_v2_1.0_224/"
+#rm mobilenet_v2_1.0_224.tgz
+
+
+
 ########################## DOWNLOADING MODELS ############################
 # Download inception. Model will be saved as classify_image_graph_def.pb
-curl -O http://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip
-mkdir "inception5h"
-unzip - inception5h.zip -d "inception5h/"
-rm inception5h.zip
+
+mkdir -p inception5h
+pushd inception5h
+wget --progress=bar \
+   http://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip \
+   -O inception5h.zip
+
+#curl -O http://storage.googleapis.com/download.tensorflow.org/models/inception5h.zip
+#mkdir "inception5h"
+#unzip - inception5h.zip -d "inception5h/"
+#rm inception5h.zip
 #
 #
 #
-# Download mobilenet
-curl -O https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz
-mkdir "mobilenet_v2_1.0_224"
-tar -xzvf mobilenet_v2_1.0_224.tgz -C "mobilenet_v2_1.0_224/"
-rm mobilenet_v2_1.0_224.tgz
+
 
 
 ######################## DOWNLOADING AND PARSING DATASETS ##################
 
 # Download dataset concepts from CSAIL
-curl -O http://netdissect.csail.mit.edu/data/broden1_224.zip
-mkdir "broden1_224"
-unzip broden1_224.zip -d broden1_224
-rm broden1_224.zip
+
+#curl -O http://netdissect.csail.mit.edu/data/broden1_224.zip
+#mkdir "broden1_224"
+#unzip broden1_224.zip -d broden1_224
+#rm broden1_224.zip
 
 cd $CUR_DIR
