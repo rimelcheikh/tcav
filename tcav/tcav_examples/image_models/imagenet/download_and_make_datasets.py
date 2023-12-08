@@ -30,13 +30,16 @@ limitations under the License.
 
     Example usage:
 
-    python download_and_make_datasets.py --source_dir=YOUR_FOLDER --number_of_images_per_folder=50 --number_of_random_folders=10
+    run download_and_make_datasets.py --source_dir=./downloaded_data --number_of_images_per_folder=100 --number_of_random_folders=100
 """
 import subprocess
 import os
 import argparse
 from tensorflow.io import gfile
 import imagenet_and_broden_fetcher as fetcher
+import csv
+import pandas as pd
+
 
 def make_concepts_targets_and_randoms(source_dir, number_of_images_per_folder, number_of_random_folders):
     # Run script to download data to source_dir
@@ -46,47 +49,106 @@ def make_concepts_targets_and_randoms(source_dir, number_of_images_per_folder, n
         subprocess.call(['bash' , 'FetchDataAndModels.sh', source_dir])
 
     # Determine classes that we will fetch
-    imagenet_classes = ['zebra']
-    broden_concepts = ['striped', 'dotted', 'zigzagged']
+    imagenet_labels = pd.read_csv('C:/Users/rielcheikh/Desktop/XAI/tcav/tcav/src/tcav/tcav/tcav_examples/image_models/imagenet/imagenet_url_map.csv',header=0)
+    inception_labels = pd.read_csv('C:/Users/rielcheikh/Desktop/XAI/tcav/tcav/src/tcav/tcav/tcav_examples/image_models/imagenet/downloaded_data/inception5h/imagenet_comp_graph_label_strings.txt',header=0)
+    imagenet = imagenet_labels['class_name'].tolist()
+    inception = inception_labels['dummy'].tolist()
+    
+    """imagenet_classes = ['antelope', 'grizzly+bear', 'killer+whale', 'beaver', 'persian+cat', 'horse', 
+           'german+shepherd', 'blue+whale', 'siamese+cat', 'skunk', 'mole', 'hippopotamus', 'leopard', 'moose', 'spider+monkey', 
+           'humpback+whale', 'elephant', 'gorilla', 'ox', 'fox', 'sheep', 'seal', 'chimpanzee', 'hamster', 'squirrel', 'rhinoceros', 
+           'rabbit', 'bat', 'giraffe', 'wolf', 'chihuahua', 'rat', 'weasel', 'otter', 'buffalo', 'giant+panda', 'deer', 'bobcat', 'pig', 
+           'mouse', 'polar+bear', 'collie', 'walrus', 'raccoon', 'dolphin']"""
+    imagenet_classes = ['beaver','dalmatian','skunk','tiger','hippopotamus','leopard','gorilla','ox','chimpanzee','hamster','weasel','otter',
+                        'zebra','lion','mouse','collie']
+    """imagenet_classes = []
+    for i in imagenet:
+        for a in inception : 
+            if i == a and i not in imagenet_classes: 
+                imagenet_classes.append(i)"""
+
+    """colors : black, brown, white 
+    objects : fish, forest, ground, meat, tree, water
+    scenes : lawn, ocean, 
+    part : tail, 
+    (material : water)"""
+    
+
+    broden_object_concepts = ['fish', 'forest', 'ground', 'meat', 'tree', 'water']
+    broden_colors_concepts = ['black-c', 'brown-c', 'white-c']
+    broden_texture_concepts = ['blotchy', 'braided', 'bubbly', 'bumpy', 'chequered', 'cobwebbed', 'cracked', 'crystalline', 'dotted',  'frilly', 'knitted', 'lacelike', 'scaly', 'striped','veined'] #['pleated','cobwebbed','grooved','bubbly','chequered','lacelike','crystalline','paisley','wrinkled','waffled','freckled','honeycombed','stratified','braided','lined','scaly','flecked','potholed','matted','cracked','studded','spiralled','swirly','zigzagged','frilly','gauzy','interlaced','grid','marbled','stained','polka-dotted','sprinkled','crosshatched','meshed','woven','perforated','veined','fibrous','pitted','knitted','porous','smeared','bumpy','striped','banded','dotted','blotchy']
+    
+    """broden_scene_concepts = []
+    with open(source_dir+'/broden1_224/c_scene.csv') as file_obj: 
+        reader_obj = csv.reader(file_obj) 
+        for row in reader_obj:  
+            if row[0] != 'code':
+                broden_scene_concepts.append(row[2])"""
 
     # make targets from imagenet
     imagenet_dataframe = fetcher.make_imagenet_dataframe("./imagenet_url_map.csv")
     for image in imagenet_classes:
-        fetcher.fetch_imagenet_class(source_dir, image, number_of_images_per_folder, imagenet_dataframe)
+        fetcher.fetch_imagenet_class(source_dir+'/awa_targets', image, number_of_images_per_folder, imagenet_dataframe)
 
     # Make concepts from broden
-    for concept in broden_concepts:
-        fetcher.download_texture_to_working_folder(broden_path=os.path.join(source_dir, 'broden1_224'),
-                                                   saving_path=source_dir,
+    """for concept in broden_texture_concepts:
+        fetcher.download_texture_to_working_folder(broden_path='./downloaded_data/broden1_224/',
+                                                   saving_path=source_dir+'/concepts',
                                                    texture_name=concept,
-                                                   number_of_images=number_of_images_per_folder)
+                                                   number_of_images=number_of_images_per_folder)"""
+    
+    """for concept in broden_scene_concepts:
+       fetcher.download_scene_to_working_folder(broden_path='./downloaded_data/broden1_224/',
+                                                   saving_path=source_dir+'/scenes/',
+                                                   scene_name=concept,
+                                                   number_of_images=number_of_images_per_folder)"""
+       
+    """for concept in broden_colors_concepts:
+       fetcher.download_color_to_working_folder(broden_path='./downloaded_data/broden1_224/',
+                                                   saving_path=source_dir+'/colors/',
+                                                   color_name=concept,
+                                                   number_of_images=number_of_images_per_folder)"""
+       
+    """for concept in broden_object_concepts:
+       fetcher.download_object_to_working_folder(broden_path='./downloaded_data/broden1_224/',
+                                                   saving_path=source_dir+'/objects/',
+                                                   object_name=concept,
+                                                   number_of_images=number_of_images_per_folder)"""
 
     # Make random folders. If we want to run N random experiments with tcav, we need N+1 folders.
-    fetcher.generate_random_folders(
+    """fetcher.generate_random_folders(
         working_directory=source_dir,
         random_folder_prefix="random500",
         number_of_random_folders=number_of_random_folders+1,
         number_of_examples_per_folder=number_of_images_per_folder,
         imagenet_dataframe=imagenet_dataframe
-    )
+    )"""
 
-
+    
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Create examples and concepts folders.')
+    """parser = argparse.ArgumentParser(description='Create examples and concepts folders.')
     parser.add_argument('--source_dir', type=str,
                         help='Name for the directory where we will create the data.')
     parser.add_argument('--number_of_images_per_folder', type=int,
                         help='Number of images to be included in each folder')
     parser.add_argument('--number_of_random_folders', type=int,
                         help='Number of folders with random examples that we will generate for tcav')
-
     args = parser.parse_args()
+    print(args.source_dir, args.number_of_images_per_folder, args.number_of_random_folders)"""
+    
     # create folder if it doesn't exist
-    if not gfile.exists(args.source_dir):
-        gfile.makedirs(os.path.join(args.source_dir))
-        print("Created source directory at " + args.source_dir)
+    source_dir='./downloaded_data' 
+    number_of_images_per_folder=100 
+    number_of_random_folders=100
+    
+    if not gfile.exists(source_dir):
+        gfile.makedirs(os.path.join(source_dir))
+        print("Created source directory at " + source_dir)
     # Make data
-    make_concepts_targets_and_randoms(args.source_dir, args.number_of_images_per_folder, args.number_of_random_folders)
-    print("Successfully created data at " + args.source_dir)
+   # make_concepts_targets_and_randoms(args.source_dir, args.number_of_images_per_folder, args.number_of_random_folders)
+    
+    make_concepts_targets_and_randoms(source_dir, number_of_images_per_folder, number_of_random_folders)
+
+    print("Successfully created data at " + source_dir)
 

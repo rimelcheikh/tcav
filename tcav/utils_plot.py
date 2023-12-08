@@ -143,7 +143,7 @@ def plot_results(results, sp_coeff, working_dir, random_counterpart=None, random
   elif random_concepts:
     num_concepts = len(result_summary) - len(random_concepts)
   else: 
-    num_concepts = len(result_summary) - num_random_exp
+    num_concepts = len(result_summary) - num_random_exp -1
     
   num_bottlenecks = len(plot_data)
   bar_width = 0.35
@@ -167,7 +167,6 @@ def plot_results(results, sp_coeff, working_dir, random_counterpart=None, random
         ax.text(index[j] + i * bar_width - 0.1, 0.01, "*",
             fontdict = {'weight': 'bold', 'size': 16,
             'color': bar.patches[0].get_facecolor()})
-  print (plot_data)
   # set properties
   ax.set_title('TCAV Scores for each concept and bottleneck')
   ax.set_ylabel('TCAV Score')

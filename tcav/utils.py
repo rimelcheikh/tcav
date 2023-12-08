@@ -17,7 +17,7 @@ limitations under the License.
 from scipy.stats import ttest_ind, rankdata
 import numpy as np
 import tensorflow as tf
-from tcav.tcav_results.results_pb2 import Result, Results
+#from tcav.tcav_results.results_pb2 import Result, Results
 
 _KEYS = [
     "cav_key", "cav_concept", "negative_concept", "target_class", "i_up",
@@ -233,15 +233,15 @@ def make_dir_if_not_exists(directory):
     tf.io.gfile.makedirs(directory)
 
 
-def result_to_proto(result):
-  """Given a result dict, convert it to a tcav.Result proto.
+"""def result_to_proto(result):
+  Given a result dict, convert it to a tcav.Result proto.
 
   Args:
     result: a dictionary returned by tcav._run_single_set()
 
   Returns:
     TCAV.Result proto
-  """
+  
   result_proto = Result()
   for key in _KEYS:
     setattr(result_proto, key, result[key])
@@ -255,22 +255,22 @@ def result_to_proto(result):
       negative_set_name]
   result_proto.cav_accuracies.overall_accuracy = result["cav_accuracies"][
       "overall"]
-  return result_proto
+  return result_proto"""
 
 
-def results_to_proto(results):
-  """Given a list of result dicts, convert it to a tcav.Results proto.
+"""def results_to_proto(results):
+  Given a list of result dicts, convert it to a tcav.Results proto.
 
   Args:
     results: a list of dictionaries returned by tcav.run()
 
   Returns:
     TCAV.Results proto
-  """
+  
   results_proto = Results()
   for result in results:
     results_proto.results.append(result_to_proto(result))
-  return results_proto
+  return results_proto"""
 
 
 def get_exp_and_pred_scores(results, target, concept, bn, neg_concept = 'random500_0'):

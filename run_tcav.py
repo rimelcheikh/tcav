@@ -15,6 +15,8 @@ import tcav.tcav as tcav
 import tcav.utils as utils
 import tcav.utils_plot as utils_plot
 import pickle
+from keras.utils import plot_model
+
 #import tcav.repro_check as repro_check
 
 import pdb
@@ -63,7 +65,7 @@ def run_tcav(target, concept, dataset, bottleneck, model_name, working_dir, num_
     mymodel = model.GoogleNetWrapper_public(sess,
                                             GRAPH_PATH,
                                             LABEL_PATH)
-    
+
     act_generator = act_gen.ImageActivationGenerator(mymodel, source_dir, activation_dir, 
                                                      max_examples=100)
     

@@ -158,7 +158,7 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
     return self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y
-    }), self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)})
+    })#, self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)}), self.sess.run(self.ends['prediction'], {self.ends['input']: np.expand_dims(example,0)})
 
   def get_predictions(self, examples):
     """Get prediction of the examples.
@@ -312,7 +312,9 @@ class PublicImageModelWrapper(ImageModelWrapper):
     assert graph.unique_name(scope, False) == scope, (
         'Scope "%s" already exists. Provide explicit scope names when '
         'importing multiple instances of the model.') % scope
+    # unique_name : Returns a unique operation name for name.
 
+    #loads saved model (.pb)
     graph_def = tf.compat.v1.GraphDef.FromString(
         tf.io.gfile.GFile(saved_path, 'rb').read())
 
@@ -322,6 +324,9 @@ class PublicImageModelWrapper(ImageModelWrapper):
 
       graph_inputs = {}
       graph_inputs[endpoints['input']] = t_prep_input
+      
+      #Returns a list of Operation and/or Tensor objects from the imported graph,
+      #corresponding to the names in list(endpoints.values())
       myendpoints = tf.import_graph_def(
           graph_def, graph_inputs, list(endpoints.values()), name=sc)
       myendpoints = dict(list(zip(list(endpoints.keys()), myendpoints)))

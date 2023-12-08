@@ -9,7 +9,8 @@ import sys, os
 import tensorflow as tf
 import numpy as np
 
-from run_tcav import run_tcav #as run_tcav
+from run_tcav import run_tcav
+from tcav.model_custom import run_tcav_custom 
 import tcav.utils as utils
 import tcav.utils_plot as utils_plot
 import pickle
@@ -24,7 +25,7 @@ import pdb
 
 # This is the name of your model wrapper (InceptionV3 and GoogleNet are provided in model.py)
 model_to_run = 'c'  
-user = 'eval_test_awa'
+user = 'eval_test_awa_inception_V3'
 
 #eval_save_dir = "./tmp/" + user + '/' + project_name
 
@@ -37,8 +38,8 @@ tf.compat.v1.enable_eager_execution()
            'humpback+whale', 'elephant', 'gorilla', 'ox', 'fox', 'sheep', 'seal', 'chimpanzee', 'hamster', 'squirrel', 'rhinoceros', 
            'rabbit', 'bat', 'giraffe', 'wolf', 'chihuahua', 'rat', 'weasel', 'otter', 'buffalo', 'giant+panda', 'deer', 'bobcat', 'pig', 
            'mouse', 'polar+bear', 'collie', 'walrus', 'raccoon', 'cow', 'dolphin']"""
-targets = ['dalmatian','zebra','lion','tiger','hippopotamus','leopard','gorilla','ox','chimpanzee','hamster','weasel','otter',
-                        'mouse','collie','beaver','skunk']
+targets = ['dalmatian']#,'zebra','lion','tiger','hippopotamus','leopard','gorilla','ox','chimpanzee','hamster','weasel','otter',
+                        #'mouse','collie','beaver','skunk']
 
 
 #'plant','papyrus','paper','concrete','soapsuds','chess','crackle','rock','crystal','common marigold',
@@ -48,7 +49,7 @@ targets = ['dalmatian','zebra','lion','tiger','hippopotamus','leopard','gorilla'
 concepts = ['ocean-s', 'desert-s', 'forest-s','black-c', 'brown-c', 'white-c', 'blue-c', 'orange-c', 'red-c', 'yellow-c']
 
 dataset = 'imagenet'  
-bottleneck = ['mixed3a']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
+bottleneck = ['mixed10']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
 model_name = "x"
 
 
@@ -60,37 +61,36 @@ class_tcav_score = {}
 
 for target in targets:
 
-    try:
-        project_name = 'tcav_test_'+str(target)
-        working_dir = "./tmp/" + user + '/' + project_name
-    
-        if not exists(working_dir):
-            os.makedirs(working_dir)
-        
-        if not exists(working_dir+'/tcav_res_'+target+'.pkl'):
-            run_tcav(target, concepts, dataset, bottleneck, model_name, working_dir, num_random_exp=10)
-            
-        with open(working_dir+'/tcav_res_'+target+'.pkl', 'rb') as fp:
-            tcav_results = pickle.load(fp)
-            class_tcav_score[target] = {}
-            #search for random batch that gives max TCAV score (i_up) for concept
-            for i in range(len(tcav_results)):
-                if not tcav_results[i]['cav_concept'][:6] == 'random':
-                    res = tcav_results[i]                    
-                    try : 
-                        if(class_tcav_score[target][tcav_results[i]['cav_concept']] < res['i_up']):
-                            class_tcav_score[target][tcav_results[i]['cav_concept']] = res['i_up']
-                    except:
-                        class_tcav_score[target][tcav_results[i]['cav_concept']] = res['i_up']
-                        
-            #i_expl = class_tcav_score.index(np.max(class_tcav_score))
-            #instances_logit_scores =  np.squeeze(tcav_results[i_expl]['logits'])[:,80]
-            #sp_coeff[target] = utils.spearmans_rank(instances_tcav_scores, instances_logit_scores)[0][1]
- 
-    except Exception as error:
-        print('Error for target ', target, ':', error)
-        
+    #try:
+    project_name = 'tcav_test_'+str(target)
+    working_dir = "./tmp/" + user + '/' + project_name
 
+    if not exists(working_dir):
+        os.makedirs(working_dir)
+    
+    if not exists(working_dir+'/tcav_res_'+target+'.pkl'):
+        run_tcav_custom(target, concepts, dataset, bottleneck, model_name, working_dir, num_random_exp=10)
+        
+    with open(working_dir+'/tcav_res_'+target+'.pkl', 'rb') as fp:
+        tcav_results = pickle.load(fp)
+        class_tcav_score[target] = {}
+        #search for random batch that gives max TCAV score (i_up) for concept
+        for i in range(len(tcav_results)):
+            if not tcav_results[i]['cav_concept'][:6] == 'random':
+                res = tcav_results[i]                    
+                try : 
+                    if(class_tcav_score[target][tcav_results[i]['cav_concept']] < res['i_up']):
+                        class_tcav_score[target][tcav_results[i]['cav_concept']] = res['i_up']
+                except:
+                    class_tcav_score[target][tcav_results[i]['cav_concept']] = res['i_up']
+                    
+        #i_expl = class_tcav_score.index(np.max(class_tcav_score))
+        #instances_logit_scores =  np.squeeze(tcav_results[i_expl]['logits'])[:,80]
+        #sp_coeff[target] = utils.spearmans_rank(instances_tcav_scores, instances_logit_scores)[0][1]
+ 
+    """except Exception as error:
+        print('Error for target ', target, ':', error)"""
+        
 
 #computing spearman when concept is fixed
 sp_coeff_targets = {}

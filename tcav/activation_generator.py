@@ -70,15 +70,18 @@ class ActivationGeneratorBase(ActivationGeneratorInterface):
         
       if concept not in acts:
         acts[concept] = {}
+      
       for bottleneck_name in bottleneck_names:
         acts_path = os.path.join(self.acts_dir, 'acts_{}_{}'.format(
             concept, bottleneck_name)) if self.acts_dir else None
+        
         if acts_path and tf.io.gfile.exists(acts_path):
           with tf.io.gfile.GFile(acts_path, 'rb') as f:
             acts[concept][bottleneck_name] = np.load(
                 f, allow_pickle=True).squeeze()
             tf.compat.v1.logging.info('Loaded {} shape {}'.format(
                 acts_path, acts[concept][bottleneck_name].shape))
+        
         else:
           acts[concept][bottleneck_name] = self.get_activations_for_concept(
               concept, bottleneck_name)
@@ -163,7 +166,7 @@ class ImageActivationGenerator(ActivationGeneratorBase):
                              max_imgs=500,
                              do_shuffle=True,
                              run_parallel=False,
-                             shape=(299, 299),
+                             shape=(224,224),#(299, 299),
                              num_workers=50):
     """Return image arrays from filenames.
 
