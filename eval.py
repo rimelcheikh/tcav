@@ -25,7 +25,7 @@ import pdb
 
 # This is the name of your model wrapper (InceptionV3 and GoogleNet are provided in model.py)
 model_to_run = 'c'  
-user = 'eval_test_awa_inception_V3'
+user = 'eval_test_awa_resnet18_test'
 
 #eval_save_dir = "./tmp/" + user + '/' + project_name
 
@@ -50,12 +50,11 @@ concepts = ['ocean-s', 'desert-s', 'forest-s','black-c', 'brown-c', 'white-c', '
 
 dataset = 'imagenet'  
 bottleneck = ['mixed10']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
-model_name = "x"
+model_name = "resnet18"
 
 
 awa_rationales_mat = awa_rationales()
 
-# Computing Spearman's rank correlation coefficient between the sensitivity and the prediction scores
 
 class_tcav_score = {}
 
@@ -151,13 +150,6 @@ with open("./tmp/" + user +'/result_fixed_target_and_concept.pkl', 'wb') as fp:
 
 with open("./tmp/" + user +'/result_fixed_target_and_concept.pkl', 'rb') as fp:
     print('Results:', pickle.load(fp))
-
-
-
-
-
-
-
 
 
 

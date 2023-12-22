@@ -11,6 +11,8 @@ import tensorflow as tf
 import tcav.utils_plot as utils_plot
 from keras.utils import plot_model
 
+from torchvision import models
+
 
 
 # Modified version of PublicImageModelWrapper in TCAV's models.py
@@ -84,7 +86,20 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
             
         return bn_endpoints
       
-  
+def get_model(model_name):
+    
+    if model_name == 'inceptionv3':
+        return InceptionV3(
+            include_top=True,
+            weights="imagenet",
+            input_tensor=None,
+            input_shape=None,
+            pooling=None,
+            classes=1000,
+            classifier_activation="softmax",
+        )
+    elif model_name == 'resnet18':
+        return models.resnet18(pretrained=True)
       
 
 def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_dir, num_random_exp):
@@ -119,15 +134,8 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     # Your code for training and creating a model here. In this example, I saved the model previously
     # using model.save and am loading it again in keras here using load_model.
     #model = load_model('./experiment_models/model.h5')
-    model = InceptionV3(
-        include_top=True,
-        weights="imagenet",
-        input_tensor=None,
-        input_shape=None,
-        pooling=None,
-        classes=1000,
-        classifier_activation="softmax",
-    )
+    model = get_model(model_name)
+    inceptionv3 = get_model('inceptionv3')
       
     # input is the first tensor, logit and prediction is the final tensor.
     # note that in keras, these arguments should be exactly the same for other models (e.g VGG16), except for the model name
