@@ -1,4 +1,4 @@
-from keras.applications.inception_v3 import InceptionV3
+import keras.applications as models
 from keras.models import Model, load_model
 import keras.backend as K
 import pickle
@@ -11,7 +11,6 @@ import tensorflow as tf
 import tcav.utils_plot as utils_plot
 from keras.utils import plot_model
 
-from torchvision import models
 
 
 
@@ -31,7 +30,9 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         # get endpoint tensors
         self.ends = {'input': endpoints_dict['input_tensor'], 'prediction': endpoints_dict['prediction_tensor']}
         
-        self.bottlenecks_tensors = self.get_bottleneck_tensors()
+        
+        #TODO
+        self.bottlenecks_tensors = self.get_bottleneck_tensors(self.model_name)
         
         # load the graph from the backend
         graph = tf.compat.v1.get_default_graph()
@@ -72,15 +73,23 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         return t_input, t_prep_input
 
     @staticmethod
-    def get_bottleneck_tensors():
-        """Add Inception bottlenecks and their pre-Relu versions to endpoints dict."""
+    def get_bottleneck_tensors(model_name):
+        """Add bottlenecks and their pre-Relu versions to endpoints dict."""
+        if model_name == 'inceptionv3':
+            bn_name = 'ConcatV2'
+        elif model_name.split('_')[0] == 'resnet':
+            bn_name = 'AddV2'
+        elif model_name.split('_')[0] == 'vgg':
+            bn_name = 'MaxPool'
+            
         graph = tf.compat.v1.get_default_graph()
         bn_endpoints = {}
         for op in graph.get_operations():
-            # change this below string to change which layers are considered bottlenecks
-            # use 'ConcatV2' for InceptionV3
-            # use 'MaxPool' for VGG16 (for example)
-            if 'ConcatV2' in op.type:
+            """for op in graph.get_operations():
+                if op.type not in z:
+                    z.append(op.type)"""
+            
+            if bn_name in op.type:
                 name = op.name.split('/')[0]
                 bn_endpoints[name] = op.outputs[0]
             
@@ -89,7 +98,7 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
 def get_model(model_name):
     
     if model_name == 'inceptionv3':
-        return InceptionV3(
+        return models.InceptionV3(
             include_top=True,
             weights="imagenet",
             input_tensor=None,
@@ -97,9 +106,31 @@ def get_model(model_name):
             pooling=None,
             classes=1000,
             classifier_activation="softmax",
-        )
-    elif model_name == 'resnet18':
-        return models.resnet18(pretrained=True)
+        ), [299, 299, 3]
+    
+    elif model_name == 'resnet_101':
+        return models.ResNet101(
+            include_top=True,
+            weights="imagenet",
+            input_tensor=None,
+            input_shape=None,
+            pooling=None,
+            classes=1000,
+            classifier_activation="softmax",
+        ), [224, 224, 3]
+    
+    elif model_name == 'vgg_16':
+        return models.VGG16(
+            include_top=True,
+            weights="imagenet",
+            input_tensor=None,
+            input_shape=None,
+            pooling=None,
+            classes=1000,
+            classifier_activation="softmax",
+        ), [224, 224, 3]
+    
+    
       
 
 def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_dir, num_random_exp):
@@ -134,18 +165,19 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     # Your code for training and creating a model here. In this example, I saved the model previously
     # using model.save and am loading it again in keras here using load_model.
     #model = load_model('./experiment_models/model.h5')
-    model = get_model(model_name)
-    inceptionv3 = get_model('inceptionv3')
+    model = get_model(model_name)[0]
       
     # input is the first tensor, logit and prediction is the final tensor.
     # note that in keras, these arguments should be exactly the same for other models (e.g VGG16), except for the model name
-    endpoints_v3 = dict(
+    endpoints = dict(
         input=model.inputs[0].name,
         input_tensor=model.inputs[0],
         logit=model.outputs[0].name,
         prediction=model.outputs[0].name,
         prediction_tensor=model.outputs[0],
     )
+    
+    
     
     # endpoints_v3 should look like this
     #endpoints_v3 = {
@@ -159,14 +191,15 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     
     
     
+    #TODO
     # instance of model wrapper, change the labels and other arguments to whatever you need
     LABEL_PATH = source_dir + "/inception5h/imagenet_comp_graph_label_strings.txt"
 
     mymodel = CustomPublicImageModelWrapper(sess, 
-            LABEL_PATH, [299, 299, 3], endpoints_v3, 
-            'InceptionV3_public', (-1, 1))
+            LABEL_PATH, get_model(model_name)[1], endpoints, 
+            model_name, (-1, 1))
     
-    #plot_model(model, to_file='inceptionV3.png', show_shapes=True, show_layer_names=True)
+    #plot_model(model, to_file=model_name+'.png', show_shapes=True, show_layer_names=True)
 
     
     act_generator = act_gen.ImageActivationGenerator(mymodel, source_dir, activation_dir, max_examples=200)

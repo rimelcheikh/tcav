@@ -23,9 +23,6 @@ from awa_rationales import *
 import pdb
 #pdb.set_trace()
 
-# This is the name of your model wrapper (InceptionV3 and GoogleNet are provided in model.py)
-model_to_run = 'c'  
-user = 'eval_test_awa_resnet18_test'
 
 #eval_save_dir = "./tmp/" + user + '/' + project_name
 
@@ -49,9 +46,21 @@ targets = ['dalmatian']#,'zebra','lion','tiger','hippopotamus','leopard','gorill
 concepts = ['ocean-s', 'desert-s', 'forest-s','black-c', 'brown-c', 'white-c', 'blue-c', 'orange-c', 'red-c', 'yellow-c']
 
 dataset = 'imagenet'  
-bottleneck = ['mixed10']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
-model_name = "resnet18"
 
+
+#bottleneck is the last layer before flatten operation
+#inceptionv3 ['mixed10']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
+bottleneck = ['mixed10']
+
+#ResNet101 ['conv5_block3_add_1,conv5_block3_add']
+#bottleneck = ['conv5_block3_add_1']
+
+#vgg_16 ['block1_pool','block2_pool','block3_pool','block4_pool','block5_pool','block1_pool_1','block2_pool_1','block3_pool_1','block4_pool_1','block5_pool_1']
+#bottleneck = ['block5_pool_1']
+
+
+model_name = "inceptionv3"
+user = 'eval_test_awa_'+model_name+'_test'
 
 awa_rationales_mat = awa_rationales()
 

@@ -94,7 +94,7 @@ def run_tcav(target, concept, dataset, bottleneck, model_name, working_dir, num_
         print('dictionary saved successfully to file')
     
     #return results
-    
+    sess.close()
 
         
     
