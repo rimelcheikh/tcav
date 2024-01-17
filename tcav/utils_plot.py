@@ -143,7 +143,7 @@ def plot_results(results, sp_coeff, working_dir, random_counterpart=None, random
   elif random_concepts:
     num_concepts = len(result_summary) - len(random_concepts)
   else: 
-    num_concepts = len(result_summary) - num_random_exp -1
+    num_concepts = len(result_summary) - num_random_exp #-1
     
   num_bottlenecks = len(plot_data)
   bar_width = 0.35

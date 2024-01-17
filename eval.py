@@ -35,8 +35,8 @@ tf.compat.v1.enable_eager_execution()
            'humpback+whale', 'elephant', 'gorilla', 'ox', 'fox', 'sheep', 'seal', 'chimpanzee', 'hamster', 'squirrel', 'rhinoceros', 
            'rabbit', 'bat', 'giraffe', 'wolf', 'chihuahua', 'rat', 'weasel', 'otter', 'buffalo', 'giant+panda', 'deer', 'bobcat', 'pig', 
            'mouse', 'polar+bear', 'collie', 'walrus', 'raccoon', 'cow', 'dolphin']"""
-targets = ['dalmatian']#,'zebra','lion','tiger','hippopotamus','leopard','gorilla','ox','chimpanzee','hamster','weasel','otter',
-                        #'mouse','collie','beaver','skunk']
+targets = ['dalmatian','zebra','lion','tiger','hippopotamus','leopard','gorilla','ox','chimpanzee','hamster','weasel',
+           'otter','mouse','collie','beaver','skunk']
 
 
 #'plant','papyrus','paper','concrete','soapsuds','chess','crackle','rock','crystal','common marigold',
@@ -50,7 +50,7 @@ dataset = 'imagenet'
 
 #bottleneck is the last layer before flatten operation
 #inceptionv3 ['mixed10']  #['mixed3a']#,'mixed3b','mixed4a','mixed4b','mixed4c','mixed4d','mixed4e','mixed5a','mixed5b']  
-bottleneck = ['mixed10']
+#bottleneck = ['mixed10']
 
 #ResNet101 ['conv5_block3_add_1,conv5_block3_add']
 #bottleneck = ['conv5_block3_add_1']
@@ -60,7 +60,14 @@ bottleneck = ['mixed10']
 
 
 model_name = "inceptionv3"
-user = 'eval_test_awa_'+model_name+'_test'
+user = 'eval_test_awa_'+model_name+'_test_1'
+
+if model_name == 'inceptionv3':
+    bottleneck = ['mixed10']
+elif model_name == 'resnet_101':
+    bottleneck = ['conv5_block3_add']
+elif model_name == 'vgg_16':
+    bottleneck = ['block5_pool']
 
 awa_rationales_mat = awa_rationales()
 
@@ -71,7 +78,7 @@ for target in targets:
 
     #try:
     project_name = 'tcav_test_'+str(target)
-    working_dir = "./tmp/" + user + '/' + project_name
+    working_dir = "./tcav/tcav_results/" + user + '/' + project_name
 
     if not exists(working_dir):
         os.makedirs(working_dir)
@@ -115,12 +122,12 @@ for c in concepts:
     sp_coeff_targets[c] = utils.spearmans_rank(rationale, tcav)[0][1]
 
 
-with open("./tmp/" + user +'/result_fixed_concept.pkl', 'wb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_concept.pkl', 'wb') as fp:
     pickle.dump(sp_coeff_targets, fp)
     print('Spearman coeff on fixed concepts saved successfully to file')
 
 
-with open("./tmp/" + user +'/result_fixed_concept.pkl', 'rb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_concept.pkl', 'rb') as fp:
     print('Results:', pickle.load(fp))
 
 
@@ -151,13 +158,12 @@ for t in targets:
         s_vect.append(tcav_dict[t][c])
 sp_coeff = utils.spearmans_rank(r_vect, s_vect)[0][1]
 
-
-with open("./tmp/" + user +'/result_fixed_target_and_concept.pkl', 'wb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_target_and_concept.pkl', 'wb') as fp:
     pickle.dump(sp_coeff, fp)
     print('Spearman coeff on fixed targets saved successfully to file')
 
 
-with open("./tmp/" + user +'/result_fixed_target_and_concept.pkl', 'rb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_target_and_concept.pkl', 'rb') as fp:
     print('Results:', pickle.load(fp))
 
 
@@ -180,12 +186,12 @@ for target in targets:
     sp_coeff_concepts[target] = utils.spearmans_rank(rationale, tcav)[0][1]
 
 
-with open("./tmp/" + user +'/result_fixed_target.pkl', 'wb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_target.pkl', 'wb') as fp:
     pickle.dump(sp_coeff_concepts, fp)
     print('Spearman coeff on fixed targets saved successfully to file') 
 
 
-with open("./tmp/" + user +'/result_fixed_target.pkl', 'rb') as fp:
+with open("./tcav/tcav_results/" + user +'/result_fixed_target.pkl', 'rb') as fp:
     print('Results:', pickle.load(fp))
 
 

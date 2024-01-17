@@ -19,20 +19,25 @@ from keras.utils import plot_model
 # This model also assumes softmax is used with categorical crossentropy.
 class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
     def __init__(self, sess, labels, image_shape,
-                endpoints_dict, name, image_value_range):
+                endpoints_dict, name, image_value_range, model):
+        
         super(self.__class__, self).__init__(image_shape)
         
         self.sess = sess
         self.labels = tf.io.gfile.GFile(labels).read().splitlines()
         self.model_name = name
         self.image_value_range = image_value_range
+        self.model = model
 
         # get endpoint tensors
         self.ends = {'input': endpoints_dict['input_tensor'], 'prediction': endpoints_dict['prediction_tensor']}
         
         
         #TODO
-        self.bottlenecks_tensors = self.get_bottleneck_tensors(self.model_name)
+        #self.bottlenecks_tensors = self.get_bottleneck_tensors(self.model_name)
+        self.get_bottleneck_tensors_2()
+        
+        
         
         # load the graph from the backend
         graph = tf.compat.v1.get_default_graph()
@@ -48,13 +53,25 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
                         self.y_input,
                         self.ends['prediction'].get_shape().as_list()[1]),
                     logits=self.pred))
-        self._make_gradient_tensors()
+        self._make_gradient_tensors(self.bottlenecks_tensors)
 
     def id_to_label(self, idx):
         return self.labels[idx]
 
     def label_to_id(self, label):
         return self.labels.index(label)
+
+
+    def get_bottleneck_tensors_2(self):
+      self.bottlenecks_tensors = {}
+      layers = self.model.layers
+      for layer in layers:
+        if 'input' not in layer.name and 'activation' not in layer.name and 'batch_normalization' not in layer.name and 'conv2d' not in layer.name:
+          self.bottlenecks_tensors[layer.name] = layer.output
+
+    def get_inputs_and_outputs_and_ends(self):
+      self.ends['input'] = self.model.inputs[0]
+      self.ends['prediction'] = self.model.outputs[0]
 
     @staticmethod
     def create_input(t_input, image_value_range):
@@ -72,9 +89,9 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         t_prep_input = lo + t_prep_input * (hi-lo)
         return t_input, t_prep_input
 
-    @staticmethod
+    """@staticmethod 
     def get_bottleneck_tensors(model_name):
-        """Add bottlenecks and their pre-Relu versions to endpoints dict."""
+        Add bottlenecks and their pre-Relu versions to endpoints dict.
         if model_name == 'inceptionv3':
             bn_name = 'ConcatV2'
         elif model_name.split('_')[0] == 'resnet':
@@ -85,15 +102,18 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         graph = tf.compat.v1.get_default_graph()
         bn_endpoints = {}
         for op in graph.get_operations():
-            """for op in graph.get_operations():
+            for op in graph.get_operations():
                 if op.type not in z:
-                    z.append(op.type)"""
+                    z.append(op.type)
+            "for op in graph.get_operations():
+                if op.type in ['Placeholder']:
+                    print(op.name)
             
             if bn_name in op.type:
                 name = op.name.split('/')[0]
                 bn_endpoints[name] = op.outputs[0]
             
-        return bn_endpoints
+        return bn_endpoints"""
       
 def get_model(model_name):
     
@@ -197,7 +217,7 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
 
     mymodel = CustomPublicImageModelWrapper(sess, 
             LABEL_PATH, get_model(model_name)[1], endpoints, 
-            model_name, (-1, 1))
+            model_name, (-1, 1), model)
     
     #plot_model(model, to_file=model_name+'.png', show_shapes=True, show_layer_names=True)
 
@@ -208,7 +228,7 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
             target, concept, bottleneck,
             act_generator, alphas,
             cav_dir=cav_dir,
-            num_random_exp=11)
+            num_random_exp=num_random_exp)
     
     print ('This may take a while... Go get coffee!')
     results = mytcav.run(run_parallel=False)
@@ -222,4 +242,4 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
         print('dictionary saved successfully to file')
         
     
-    sess.close()
+    #sess.close()

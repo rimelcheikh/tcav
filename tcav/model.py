@@ -132,11 +132,11 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
       else:
         self.bottlenecks_tensors[k] = tensor
 
-  def _make_gradient_tensors(self):
+  def _make_gradient_tensors(self, bottlenecks_tensors):
     """Makes gradient tensors for all bottleneck tensors."""
 
     self.bottlenecks_gradients = {}
-    for bn in self.bottlenecks_tensors:
+    for bn in bottlenecks_tensors:
       #Constructs symbolic derivatives of sum of ys w.r.t. x in xs.
       self.bottlenecks_gradients[bn] = tf.gradients(
           ys=self.loss, xs=self.bottlenecks_tensors[bn])[0]
@@ -484,3 +484,27 @@ class KerasModelWrapper(ModelWrapper):
   def get_inputs_and_outputs_and_ends(self):
     self.ends['input'] = self.model.inputs[0]
     self.ends['prediction'] = self.model.outputs[0]
+    
+    
+"""class VGG16_rapp(PublicImageModelWrapper):
+  def __init__(self, sess, model_saved_path, labels_path):
+    self.image_value_range = (-1, 1)
+    image_shape_v3 = [299, 299, 3]
+    endpoints_v3 = dict(
+        input='Mul:0',
+        logit='softmax/logits:0',
+        prediction='softmax:0',
+        pre_avgpool='mixed_10/join:0',
+        logit_weight='softmax/weights:0',
+        logit_bias='softmax/biases:0',
+    )
+
+    self.sess = sess
+    super(InceptionV3Wrapper_public, self).__init__(
+        sess,
+        model_saved_path,
+        labels_path,
+        image_shape_v3,
+        endpoints_v3,
+        scope='v3')
+    self.model_name = 'InceptionV3_public'"""
