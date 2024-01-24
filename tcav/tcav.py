@@ -19,10 +19,10 @@ from __future__ import division
 from __future__ import print_function
 from multiprocessing import dummy as multiprocessing
 from six.moves import range
-from tcav.cav import CAV
-from tcav.cav import get_or_train_cav
-from tcav import run_params
-from tcav import utils
+from tcav.tcav.cav import CAV
+from tcav.tcav.cav import get_or_train_cav
+from tcav.tcav import run_params
+from tcav.tcav import utils
 import numpy as np
 import time
 import tensorflow as tf
@@ -147,6 +147,7 @@ class TCAV(object):
                bottlenecks,
                activation_generator,
                alphas,
+               model_cav,
                random_counterpart=None,
                cav_dir=None,
                num_random_exp=5,
@@ -178,6 +179,7 @@ class TCAV(object):
     self.activation_generator = activation_generator
     self.cav_dir = cav_dir
     self.alphas = alphas
+    self.model_cav = model_cav
     self.mymodel = activation_generator.get_model()
     self.model_to_run = self.mymodel.model_name
     self.sess = sess
@@ -254,6 +256,7 @@ class TCAV(object):
     alpha = param.alpha
     mymodel = param.model
     cav_dir = param.cav_dir
+    model_cav = param.model_cav
     # first check if target class is in model.
 
     tf.compat.v1.logging.info('running %s %s' % (target_class, concepts))
@@ -265,6 +268,7 @@ class TCAV(object):
     # Get CAVs
     cav_hparams = CAV.default_hparams()
     cav_hparams['alpha'] = alpha
+    cav_hparams['model_cav'] = model_cav
     cav_instance = get_or_train_cav(
         concepts,
         bottleneck,
@@ -278,7 +282,7 @@ class TCAV(object):
       del acts[c]
 
     # Hypo testing
-    a_cav_key = CAV.cav_key(concepts, bottleneck, cav_hparams['model_type'],
+    a_cav_key = CAV.cav_key(concepts, bottleneck, cav_hparams['model_cav'],
                             cav_hparams['alpha'])
     target_class_for_compute_tcav_score = target_class
 
@@ -406,5 +410,5 @@ class TCAV(object):
           params.append(
               run_params.RunParams(bottleneck, concepts_in_test, target_in_test,
                                    self.activation_generator, self.cav_dir,
-                                   alpha, self.mymodel))
+                                   alpha, self.mymodel, self.model_cav))
     return params

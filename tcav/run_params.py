@@ -30,6 +30,7 @@ class RunParams(object):
                cav_dir,
                alpha,
                model,
+               model_cav,
                overwrite=True):
     """A simple class to take care of TCAV parameters.
 
@@ -51,6 +52,7 @@ class RunParams(object):
     self.alpha = alpha
     self.overwrite = overwrite
     self.model = model
+    self.model_cav = model_cav
 
   def get_key(self):
     return '_'.join([

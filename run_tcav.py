@@ -8,12 +8,12 @@ Created on Thu Oct  5 10:57:52 2023
 import os
 import tensorflow as tf
 
-import tcav.activation_generator as act_gen
-import tcav.cav as cav
-import tcav.model as model
-import tcav.tcav as tcav
-import tcav.utils as utils
-import tcav.utils_plot as utils_plot
+import tcav.tcav.activation_generator as act_gen
+import tcav.tcav.cav as cav
+import tcav.tcav.model as model
+import tcav.tcav.tcav as tcav
+import tcav.tcav.utils as utils
+import tcav.tcav.utils_plot as utils_plot
 import pickle
 from keras.utils import plot_model
 
@@ -23,8 +23,7 @@ import pdb
 #pdb.set_trace()
 
 # This is the name of your model wrapper (InceptionV3 and GoogleNet are provided in model.py)
-model_to_run = 'c'  
-user = 'eval_test_awa'
+
 
 result = {}
 

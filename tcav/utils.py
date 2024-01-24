@@ -273,24 +273,7 @@ def make_dir_if_not_exists(directory):
   return results_proto"""
 
 
-def get_exp_and_pred_scores(results, target, concept, bn, neg_concept = 'random500_0'):
-    
-    for i in range(len(results)):
-        if (results[i]['cav_concept'] == concept) and (results[i]['target_class'] == target) and (results[i]['negative_concept'] == neg_concept and results[i]['bottleneck'] == bn):
-            res = results[i]
-    
-            exp_scores = res['val_directional_dirs']
-            pred_scores = np.squeeze(res['logits'])[:,80]
 
-    return exp_scores, pred_scores
-    
-
-# Computing Spearman's rank correlation coefficient between the sensitivity and the predictio scores
-def spearmans_rank(exp, pred):
-    R_exp = rankdata(exp)
-    R_pred = rankdata(pred)
-    
-    return np.corrcoef(R_exp, R_pred)
 
 
 

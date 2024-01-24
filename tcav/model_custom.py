@@ -3,12 +3,12 @@ from keras.models import Model, load_model
 import keras.backend as K
 import pickle
 
-import tcav.model as tcav_model
-import tcav.tcav as tcav
-import tcav.utils as utils
-import tcav.activation_generator as act_gen
+import tcav.tcav.model as tcav_model
+import tcav.tcav.tcav as tcav
+import tcav.tcav.utils as utils
+import tcav.tcav.activation_generator as act_gen
 import tensorflow as tf
-import tcav.utils_plot as utils_plot
+import tcav.tcav.utils_plot as utils_plot
 from keras.utils import plot_model
 
 
@@ -33,7 +33,6 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         self.ends = {'input': endpoints_dict['input_tensor'], 'prediction': endpoints_dict['prediction_tensor']}
         
         
-        #TODO
         #self.bottlenecks_tensors = self.get_bottleneck_tensors(self.model_name)
         self.get_bottleneck_tensors_2()
         
@@ -153,28 +152,26 @@ def get_model(model_name):
     
       
 
-def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_dir, num_random_exp):
+def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_dir, data_dir, num_random_exp, alphas, model_cav):
 
     # the name of the parent directory that results are stored (only if you want to cache)
     project_name = 'tcav_test_'+str(target)
     working_dir = working_dir#"./tmp/" + user + '/' + project_name
-    source_dir = "./tcav/tcav_examples/image_models/"+dataset+"/data/"
+    source_dir = "./data/"#+dataset
     
     # where activations are stored (only if your act_gen_wrapper does so)
-    activation_dir =  working_dir + '/activations/'
+    activation_dir =  working_dir.rsplit('/',1)[0]+ '/activations/'
     
     # where CAVs are stored. 
     # You can say None if you don't wish to store any.
-    cav_dir = working_dir + '/cavs/'
+    cav_dir = working_dir.rsplit('/',1)[0]+ '/cavs/'
     
      
           
     utils.make_dir_if_not_exists(activation_dir)
     utils.make_dir_if_not_exists(working_dir)
     utils.make_dir_if_not_exists(cav_dir)
-    
-    # this is a regularizer penalty parameter for linear classifier to get CAVs. 
-    alphas = [0.1]   
+      
     
 
     
@@ -213,7 +210,7 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     
     #TODO
     # instance of model wrapper, change the labels and other arguments to whatever you need
-    LABEL_PATH = source_dir + "/inception5h/imagenet_comp_graph_label_strings.txt"
+    LABEL_PATH = data_dir+dataset + "/imagenet_comp_graph_label_strings.txt"
 
     mymodel = CustomPublicImageModelWrapper(sess, 
             LABEL_PATH, get_model(model_name)[1], endpoints, 
@@ -222,13 +219,14 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     #plot_model(model, to_file=model_name+'.png', show_shapes=True, show_layer_names=True)
 
     
-    act_generator = act_gen.ImageActivationGenerator(mymodel, source_dir, activation_dir, max_examples=200)
+    act_generator = act_gen.ImageActivationGenerator(mymodel, data_dir, activation_dir, max_examples=200)
     
     mytcav = tcav.TCAV(sess,
             target, concept, bottleneck,
             act_generator, alphas,
             cav_dir=cav_dir,
-            num_random_exp=num_random_exp)
+            num_random_exp=num_random_exp,
+            model_cav=model_cav)
     
     print ('This may take a while... Go get coffee!')
     results = mytcav.run(run_parallel=False)

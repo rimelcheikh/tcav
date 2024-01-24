@@ -8,7 +8,7 @@ from six.moves import range
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from tcav import utils
+from tcav.tcav import utils
 import tensorflow as tf
 
 
@@ -44,7 +44,7 @@ class CAV(object):
     Returns:
       TF.HParams for training.
     """
-    return {'model_type':'linear', 'alpha':.01, 'max_iter':1000, 'tol':1e-3}
+    return {'model_cav':'linear', 'alpha':.01, 'max_iter':1000, 'tol':1e-3}
 
   @staticmethod
   def load_cav(cav_path):
@@ -66,20 +66,20 @@ class CAV(object):
     return cav
 
   @staticmethod
-  def cav_key(concepts, bottleneck, model_type, alpha):
+  def cav_key(concepts, bottleneck, model_cav, alpha):
     """A key of this cav (useful for saving files).
 
     Args:
       concepts: set of concepts used for CAV
       bottleneck: the bottleneck used for CAV
-      model_type: the name of model for CAV
+      model_cav: the name of model for CAV
       alpha: a parameter used to learn CAV
 
     Returns:
       a string cav_key
     """
     return '-'.join([str(c) for c in concepts
-                    ]) + '-' + bottleneck + '-' + model_type + '-' + str(alpha)
+                    ]) + '-' + bottleneck + '-' + model_cav + '-' + str(alpha)
 
   @staticmethod
   def check_cav_exists(cav_dir, concepts, bottleneck, cav_hparams):
@@ -96,7 +96,7 @@ class CAV(object):
     """
     cav_path = os.path.join(
         cav_dir,
-        CAV.cav_key(concepts, bottleneck, cav_hparams['model_type'],
+        CAV.cav_key(concepts, bottleneck, cav_hparams['model_cav'],
                     cav_hparams['alpha']) + '.pkl')
     return tf.io.gfile.exists(cav_path)
 
@@ -144,20 +144,20 @@ class CAV(object):
                          'bottleneck name2':[...act array...],...
              'concept2':{'bottleneck name1':[...act array...],
     Raises:
-      ValueError: if the model_type in hparam is not compatible.
+      ValueError: if the model_cav in hparam is not compatible.
     """
 
     tf.compat.v1.logging.info('training with alpha={}'.format(self.hparams['alpha']))
     x, labels, labels2text = CAV._create_cav_training_set(
         self.concepts, self.bottleneck, acts)
 
-    if self.hparams['model_type'] == 'linear':
+    if self.hparams['model_cav'] == 'linear':
       lm = linear_model.SGDClassifier(random_state=2, alpha=self.hparams['alpha'], max_iter=self.hparams['max_iter'], tol=self.hparams['tol'])
-    elif self.hparams['model_type'] == 'logistic':
+    elif self.hparams['model_cav'] == 'logistic':
       lm = linear_model.LogisticRegression(random_state=2)
     else:
-      raise ValueError('Invalid hparams.model_type: {}'.format(
-          self.hparams['model_type']))
+      raise ValueError('Invalid hparams.model_cav: {}'.format(
+          self.hparams['model_cav']))
 
     self.accuracies = self._train_lm(lm, x, labels, labels2text)
     if len(lm.coef_) == 1:
@@ -189,7 +189,7 @@ class CAV(object):
   def get_key(self):
     """Returns cav_key."""
 
-    return CAV.cav_key(self.concepts, self.bottleneck, self.hparams['model_type'],
+    return CAV.cav_key(self.concepts, self.bottleneck, self.hparams['model_cav'],
                        self.hparams['alpha'])
 
   def get_direction(self, concept):
@@ -287,12 +287,13 @@ def get_or_train_cav(concepts,
   if cav_hparams is None:
     cav_hparams = CAV.default_hparams()
 
+
   cav_path = None
   if cav_dir is not None:
     utils.make_dir_if_not_exists(cav_dir)
     cav_path = os.path.join(
         cav_dir,
-        CAV.cav_key(concepts, bottleneck, cav_hparams['model_type'],
+        CAV.cav_key(concepts, bottleneck, cav_hparams['model_cav'],
                     cav_hparams['alpha']).replace('/', '.') + '.pkl')
 
     if not overwrite and tf.io.gfile.exists(cav_path):
