@@ -76,7 +76,33 @@ def make_concepts_targets_and_randoms(source_dir, number_of_images_per_folder, n
 
     broden_object_concepts = ['fish', 'forest', 'ground', 'meat', 'tree', 'water']
     broden_colors_concepts = ['black-c', 'brown-c', 'white-c']
-    broden_texture_concepts = ['blotchy', 'braided', 'bubbly', 'bumpy', 'chequered', 'cobwebbed', 'cracked', 'crystalline', 'dotted',  'frilly', 'knitted', 'lacelike', 'scaly', 'striped','veined'] #['pleated','cobwebbed','grooved','bubbly','chequered','lacelike','crystalline','paisley','wrinkled','waffled','freckled','honeycombed','stratified','braided','lined','scaly','flecked','potholed','matted','cracked','studded','spiralled','swirly','zigzagged','frilly','gauzy','interlaced','grid','marbled','stained','polka-dotted','sprinkled','crosshatched','meshed','woven','perforated','veined','fibrous','pitted','knitted','porous','smeared','bumpy','striped','banded','dotted','blotchy']
+    broden_texture_concepts = ['marbled','matted']#['blotchy', 'braided', 'bubbly', 'bumpy', 'chequered', 'cobwebbed', 'cracked', 'crystalline', 'dotted',  'frilly', 'knitted', 'lacelike', 'scaly', 'striped','veined'] #['pleated','cobwebbed','grooved','bubbly','chequered','lacelike','crystalline','paisley','wrinkled','waffled','freckled','honeycombed','stratified','braided','lined','scaly','flecked','potholed','matted','cracked','studded','spiralled','swirly','zigzagged','frilly','gauzy','interlaced','grid','marbled','stained','polka-dotted','sprinkled','crosshatched','meshed','woven','perforated','veined','fibrous','pitted','knitted','porous','smeared','bumpy','striped','banded','dotted','blotchy']
+    broden_scene_concepts = ['driving_range-outdoor-s',
+     'reading_room-s',
+     'swimming_pool-outdoor-s',
+     'swimming_pool-indoor-s',
+     'shopping_mall-indoor-s',
+     'desert-vegetation-s',
+     'clothing_store-s',
+     'desert-sand-s',
+     'sandbox-s',
+     'sandbar-s',
+     'ocean-s',
+     'ice_skating_rink-indoor-s',
+     'ice_skating_rink-outdoor-s',
+     'mountain_snowy-s',
+     'snowfield-s',
+     'fire_escape-s',
+     'fire_station-s',
+     'moat-dry-s',
+     'lake-natural-s',
+     'canal-natural-s',
+     'natural_history_museum-s',
+     'flight_of_stairs-natural-s']
+    
+    ['tail', 'beak', 'head', 'ear', 'nose', 'mouth', 'hair', 'face', 'eye', 'torso', 'hand', 'arm', 'leg', 'wing', 'wheel', 'door', 
+                'headlight', 'taillight', 'engine', 'text', 'horn', 'saddle', 'leaf', 'flower', 'pot', 'screen', 'skin', 'metal', 'plastic', 'wood', 
+                'glass', 'leather']
     
     """broden_scene_concepts = []
     with open(source_dir+'/broden1_224/c_scene.csv') as file_obj: 
@@ -86,22 +112,22 @@ def make_concepts_targets_and_randoms(source_dir, number_of_images_per_folder, n
                 broden_scene_concepts.append(row[2])"""
 
     # make targets from imagenet
-    imagenet_dataframe = fetcher.make_imagenet_dataframe("./imagenet_url_map.csv")
+    """imagenet_dataframe = fetcher.make_imagenet_dataframe("./imagenet_url_map.csv")
     for image in imagenet_classes:
-        fetcher.fetch_imagenet_class(source_dir+'/awa_targets', image, number_of_images_per_folder, imagenet_dataframe)
+        fetcher.fetch_imagenet_class(source_dir+'/awa_targets', image, number_of_images_per_folder, imagenet_dataframe)"""
 
     # Make concepts from broden
-    """for concept in broden_texture_concepts:
+    for concept in broden_texture_concepts:
         fetcher.download_texture_to_working_folder(broden_path='./downloaded_data/broden1_224/',
                                                    saving_path=source_dir+'/concepts',
                                                    texture_name=concept,
-                                                   number_of_images=number_of_images_per_folder)"""
+                                                   number_of_images=number_of_images_per_folder)
     
-    """for concept in broden_scene_concepts:
+    for concept in broden_scene_concepts:
        fetcher.download_scene_to_working_folder(broden_path='./downloaded_data/broden1_224/',
                                                    saving_path=source_dir+'/scenes/',
                                                    scene_name=concept,
-                                                   number_of_images=number_of_images_per_folder)"""
+                                                   number_of_images=number_of_images_per_folder)
        
     """for concept in broden_colors_concepts:
        fetcher.download_color_to_working_folder(broden_path='./downloaded_data/broden1_224/',
@@ -138,7 +164,7 @@ if __name__ == '__main__':
     print(args.source_dir, args.number_of_images_per_folder, args.number_of_random_folders)"""
     
     # create folder if it doesn't exist
-    source_dir='./downloaded_data' 
+    source_dir='C:/Users/rielcheikh/Desktop/XAI/XAI-eval/data/SUN/borden_imgs' 
     number_of_images_per_folder=100 
     number_of_random_folders=100
     

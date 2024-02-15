@@ -219,7 +219,7 @@ def run_tcav_custom(target, concept, dataset, bottleneck, model_name, working_di
     #plot_model(model, to_file=model_name+'.png', show_shapes=True, show_layer_names=True)
 
     
-    act_generator = act_gen.ImageActivationGenerator(mymodel, data_dir, activation_dir, max_examples=200)
+    act_generator = act_gen.ImageActivationGenerator(mymodel, data_dir+'/imgs/', activation_dir, max_examples=200)
     
     mytcav = tcav.TCAV(sess,
             target, concept, bottleneck,

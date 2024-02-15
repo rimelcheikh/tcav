@@ -101,7 +101,7 @@ def plot_results(results, sp_coeff, working_dir, random_counterpart=None, random
         """print("----------------------")
         for item in result_summary[concept][bottleneck]:
             print(item)
-        print(i_ups)
+        print(i_ups),
         print("----------------------")"""
         
         # Calculate statistical significance

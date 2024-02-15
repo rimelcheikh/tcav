@@ -109,7 +109,7 @@ class ImageActivationGenerator(ActivationGeneratorBase):
       normalize_image: A boolean indicating whether image pixels should be
         normalized to between 0 and 1.
     """
-    self.source_dir = source_dir+'/imgs'
+    self.source_dir = source_dir#+'/imgs/'
     self.normalize_image = normalize_image
     super(ImageActivationGenerator, self).__init__(model, acts_dir,
                                                    max_examples)
