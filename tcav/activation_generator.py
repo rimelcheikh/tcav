@@ -25,6 +25,7 @@ import numpy as np
 import PIL.Image
 import six
 import tensorflow as tf
+import pickle
 
 class ActivationGeneratorInterface(six.with_metaclass(ABCMeta, object)):
   """Interface for an activation generator for a model"""
@@ -115,10 +116,22 @@ class ImageActivationGenerator(ActivationGeneratorBase):
                                                    max_examples)
 
   def get_examples_for_concept(self, concept):
-    concept_dir = os.path.join(self.source_dir, concept)
-    img_paths = [
-        os.path.join(concept_dir, d) for d in tf.io.gfile.listdir(concept_dir)
-    ]
+    try:
+        concept_dir = os.path.join(self.source_dir, concept)
+        img_paths = [
+            os.path.join(concept_dir, d) for d in tf.io.gfile.listdir(concept_dir)
+        ]
+    except:
+        with open('./data/dict_apy_imagenet_classes.pkl','rb') as f:
+            corr = pickle.load(f)
+        for k in corr.keys():
+            if concept in corr[k]:
+                concept_dir = os.path.join(self.source_dir, k)
+                img_paths = [
+                    os.path.join(concept_dir, d) for d in tf.io.gfile.listdir(concept_dir)
+                ]
+            
+            
     imgs = self.load_images_from_files(
         img_paths, self.max_examples, shape=self.model.get_image_shape()[:2])
     return imgs

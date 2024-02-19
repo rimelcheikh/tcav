@@ -55,11 +55,23 @@ class TCAV(object):
         sign of the directional derivative
     """
     # Grad points in the direction which DECREASES probability of class
-    grad = mymodel.get_gradient(
-        act, [class_id], cav.bottleneck, example)
-    grad= np.reshape(grad, -1)
-    dot_prod = np.dot(grad, cav.get_direction(concept))
-    return dot_prod < 0
+    if type(class_id) == list:
+        m = []
+        for cl in class_id:
+            grad = mymodel.get_gradient(
+                act, [cl], cav.bottleneck, example)
+            grad= np.reshape(grad, -1)
+            dot_prod = np.dot(grad, cav.get_direction(concept)) 
+            m.append(dot_prod)
+        dot_prod = max(m)               
+        return dot_prod < 0, dot_prod
+        
+    else:
+        grad = mymodel.get_gradient(
+            act, [class_id], cav.bottleneck, example)
+        grad= np.reshape(grad, -1)
+        dot_prod = np.dot(grad, cav.get_direction(concept))
+        return dot_prod < 0, dot_prod
 
   @staticmethod
   def compute_tcav_score(mymodel,
@@ -90,23 +102,47 @@ class TCAV(object):
     """
     count = 0
     class_id = mymodel.label_to_id(target_class)
-    if run_parallel:
-      pool = multiprocessing.Pool(num_workers)
-      directions = pool.map(
-          lambda i: TCAV.get_direction_dir_sign(
-              mymodel, np.expand_dims(class_acts[i], 0),
-              cav, concept, class_id, examples[i]),
-          range(len(class_acts)))
-      pool.close()
-      return sum(directions) / float(len(class_acts))
+    per_img_tcav = []
+    
+    if type(class_id) == list:
+        if run_parallel:
+          pool = multiprocessing.Pool(num_workers)
+          directions = pool.map(
+              lambda i: TCAV.get_direction_dir_sign(
+                  mymodel, np.expand_dims(class_acts[i], 0),
+                  cav, concept, class_id, examples[i]),
+              range(len(class_acts)))
+          pool.close()
+          return sum(directions) / float(len(class_acts))
+        else:
+          for i in range(len(class_acts)):
+            act = np.expand_dims(class_acts[i], 0)
+            example = examples[i]
+            if TCAV.get_direction_dir_sign(
+                mymodel, act, cav, concept, class_id, example):
+              count += 1
+            per_img_tcav.append(TCAV.get_direction_dir_sign(mymodel, act, cav, concept, class_id, example))
+          return float(count) / float(len(class_acts)), per_img_tcav
+    
     else:
-      for i in range(len(class_acts)):
-        act = np.expand_dims(class_acts[i], 0)
-        example = examples[i]
-        if TCAV.get_direction_dir_sign(
-            mymodel, act, cav, concept, class_id, example):
-          count += 1
-      return float(count) / float(len(class_acts))
+        if run_parallel:
+          pool = multiprocessing.Pool(num_workers)
+          directions = pool.map(
+              lambda i: TCAV.get_direction_dir_sign(
+                  mymodel, np.expand_dims(class_acts[i], 0),
+                  cav, concept, class_id, examples[i]),
+              range(len(class_acts)))
+          pool.close()
+          return sum(directions) / float(len(class_acts))
+        else:
+          for i in range(len(class_acts)):
+            act = np.expand_dims(class_acts[i], 0)
+            example = examples[i]
+            if TCAV.get_direction_dir_sign(
+                mymodel, act, cav, concept, class_id, example):
+              count += 1
+            per_img_tcav.append(TCAV.get_direction_dir_sign(mymodel, act, cav, concept, class_id, example))
+          return float(count) / float(len(class_acts)), per_img_tcav
 
   @staticmethod
   def get_directional_dir(
@@ -288,7 +324,7 @@ class TCAV(object):
 
     cav_concept = concepts[0]
 
-    i_up = self.compute_tcav_score(
+    i_up, per_img_tcav = self.compute_tcav_score(
         mymodel, target_class_for_compute_tcav_score, cav_concept,
         cav_instance, acts[target_class][cav_instance.bottleneck],
         activation_generator.get_examples_for_concept(target_class),
@@ -325,7 +361,8 @@ class TCAV(object):
         'bottleneck':
             bottleneck,
         'logits':
-            None
+            None,
+        'per_img_tcav': per_img_tcav,
     }
     del acts
     return result

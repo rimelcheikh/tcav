@@ -58,7 +58,19 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
         return self.labels[idx]
 
     def label_to_id(self, label):
-        return self.labels.index(label)
+        #return self.labels.index(label)
+        try : 
+            to_return = self.labels.index(label)
+        
+        except:
+            with open('./data/dict_apy_imagenet_classes.pkl','rb') as f:
+                corr = pickle.load(f)
+            for k in corr.keys():
+                if label == k:
+                    to_return = []
+                    for i in corr[k]:
+                        to_return.append(self.labels.index(i))
+        return to_return
 
 
     def get_bottleneck_tensors_2(self):

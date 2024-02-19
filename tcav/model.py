@@ -155,10 +155,19 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
     Returns:
       the gradient array.
     """
-    return self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
+
+    
+    try : 
+        h = self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y
-    })#, self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)}), self.sess.run(self.ends['prediction'], {self.ends['input']: np.expand_dims(example,0)})
+    })
+    except : 
+        h = self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
+        self.bottlenecks_tensors[bottleneck_name]: acts,
+        self.y_input: y[0]})
+        
+    return h#, self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)}), self.sess.run(self.ends['prediction'], {self.ends['input']: np.expand_dims(example,0)})
 
   def get_predictions(self, examples):
     """Get prediction of the examples.
