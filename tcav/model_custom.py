@@ -70,6 +70,7 @@ class CustomPublicImageModelWrapper(tcav_model.ImageModelWrapper):
                     to_return = []
                     for i in corr[k]:
                         to_return.append(self.labels.index(i))
+        #print('!!!!',to_return)
         return to_return
 
 

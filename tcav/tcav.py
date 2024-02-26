@@ -57,6 +57,7 @@ class TCAV(object):
     # Grad points in the direction which DECREASES probability of class
     if type(class_id) == list:
         m = []
+        
         for cl in class_id:
             grad = mymodel.get_gradient(
                 act, [cl], cav.bottleneck, example)
@@ -110,7 +111,7 @@ class TCAV(object):
           directions = pool.map(
               lambda i: TCAV.get_direction_dir_sign(
                   mymodel, np.expand_dims(class_acts[i], 0),
-                  cav, concept, class_id, examples[i]),
+                  cav, concept, class_id, examples[i])[0],
               range(len(class_acts)))
           pool.close()
           return sum(directions) / float(len(class_acts))
@@ -119,7 +120,7 @@ class TCAV(object):
             act = np.expand_dims(class_acts[i], 0)
             example = examples[i]
             if TCAV.get_direction_dir_sign(
-                mymodel, act, cav, concept, class_id, example):
+                mymodel, act, cav, concept, class_id, example)[0]:
               count += 1
             per_img_tcav.append(TCAV.get_direction_dir_sign(mymodel, act, cav, concept, class_id, example))
           return float(count) / float(len(class_acts)), per_img_tcav
@@ -130,7 +131,7 @@ class TCAV(object):
           directions = pool.map(
               lambda i: TCAV.get_direction_dir_sign(
                   mymodel, np.expand_dims(class_acts[i], 0),
-                  cav, concept, class_id, examples[i]),
+                  cav, concept, class_id, examples[i])[0],
               range(len(class_acts)))
           pool.close()
           return sum(directions) / float(len(class_acts))
@@ -139,7 +140,7 @@ class TCAV(object):
             act = np.expand_dims(class_acts[i], 0)
             example = examples[i]
             if TCAV.get_direction_dir_sign(
-                mymodel, act, cav, concept, class_id, example):
+                mymodel, act, cav, concept, class_id, example)[0]:
               count += 1
             per_img_tcav.append(TCAV.get_direction_dir_sign(mymodel, act, cav, concept, class_id, example))
           return float(count) / float(len(class_acts)), per_img_tcav
@@ -167,14 +168,30 @@ class TCAV(object):
     class_id = mymodel.label_to_id(target_class)
     directional_dir_vals = []
     #logits = []
-    for i in range(len(class_acts)):
-      act = np.expand_dims(class_acts[i], 0)
-      example = examples[i]
-      grad = mymodel.get_gradient(act, [class_id], cav.bottleneck, example)
-      grad = np.reshape(grad, -1)
-      directional_dir_vals.append(np.dot(grad, cav.get_direction(concept)))
-      #logits.append(logit)
-    return directional_dir_vals#, logits
+    
+    if type(class_id) == list:    
+        for i in range(len(class_acts)):
+            m = []
+            for cl in class_id:
+                act = np.expand_dims(class_acts[i], 0)
+                example = examples[i]
+                grad = mymodel.get_gradient(act, [cl], cav.bottleneck, example)
+                grad = np.reshape(grad, -1)
+                val = np.dot(grad, cav.get_direction(concept))
+                m.append(val)
+            val = max(m)
+            directional_dir_vals.append(val)
+        return directional_dir_vals
+        
+    else:         
+        for i in range(len(class_acts)):
+          act = np.expand_dims(class_acts[i], 0)
+          example = examples[i]
+          grad = mymodel.get_gradient(act, class_id, cav.bottleneck, example)
+          grad = np.reshape(grad, -1)
+          directional_dir_vals.append(np.dot(grad, cav.get_direction(concept)))
+          #logits.append(logit)
+        return directional_dir_vals#, logits
 
   def __init__(self,
                sess,

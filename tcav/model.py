@@ -156,16 +156,17 @@ class ModelWrapper(six.with_metaclass(ABCMeta, object)):
       the gradient array.
     """
 
-    
+         
     try : 
         h = self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y
     })
-    except : 
+    except :
         h = self.sess.run(self.bottlenecks_gradients[bottleneck_name], {
         self.bottlenecks_tensors[bottleneck_name]: acts,
         self.y_input: y[0]})
+         
         
     return h#, self.sess.run(self.ends['logit'], {self.ends['input']: np.expand_dims(example,0)}), self.sess.run(self.ends['prediction'], {self.ends['input']: np.expand_dims(example,0)})
 
